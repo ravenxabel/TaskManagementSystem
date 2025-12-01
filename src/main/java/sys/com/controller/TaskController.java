@@ -17,14 +17,26 @@ public class TaskController {
     @Autowired
     private TaskService taskService;
 
-    @GetMapping
+    @GetMapping("")
     public String listTasks(Model model) {
         model.addAttribute("tasks", taskService.getAll());
         return "tasks";
     }
 
+    @GetMapping("/new")
+    public String showAddForm(Model model) {
+        model.addAttribute("task", new Task());
+        return "task_form";
+    }
+
+    @PostMapping("")
+    public String saveTaskFromForm(@ModelAttribute Task task) {
+        taskService.save(task);
+        return "redirect:/tasks";
+    }
+
     @PostMapping("/save")
-    public String saveTask(@ModelAttribute Task task) {
+    public String saveTaskFromModal(@ModelAttribute Task task) {
         taskService.save(task);
         return "redirect:/home";
     }
@@ -39,12 +51,12 @@ public class TaskController {
         }
 
         return ResponseEntity.ok(Map.of(
-            "id", task.getId(),
-            "title", task.getTitle(),
-            "description", task.getDescription(),
-            "priority", task.getPriority(),
-            "status", task.getStatus(),
-            "dueDate", task.getDueDate() != null ? task.getDueDate().toString() : ""
+                "id", task.getId(),
+                "title", task.getTitle(),
+                "description", task.getDescription(),
+                "priority", task.getPriority(),
+                "status", task.getStatus(),
+                "dueDate", task.getDueDate() != null ? task.getDueDate().toString() : ""
         ));
     }
 

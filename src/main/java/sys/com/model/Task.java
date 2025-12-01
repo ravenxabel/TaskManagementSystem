@@ -31,6 +31,8 @@ public class Task {
         this.created = LocalDateTime.now();
     }
 
+    // Getters y setters
+
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
