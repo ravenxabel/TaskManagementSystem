@@ -56,7 +56,8 @@ public class TaskController {
 
     @PostMapping("/save")
     @PreAuthorize("hasAuthority('PERMISSION_CREATE') or hasAuthority('PERMISSION_UPDATE')")
-    public String saveTaskFromModal(@ModelAttribute Task task, RedirectAttributes redirectAttributes) {
+    public String saveTaskFromModal(@ModelAttribute Task task, RedirectAttributes redirectAttributes,
+                                   @RequestHeader(value = "referer", required = false) String referer) {
         try {
             taskService.save(task);
             redirectAttributes.addFlashAttribute("successMessage",
@@ -64,6 +65,11 @@ public class TaskController {
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage",
                 "Error al guardar la tarea: " + e.getMessage());
+        }
+
+        // Redirigir a la página desde donde se hizo la petición
+        if (referer != null && referer.contains("/tasks")) {
+            return "redirect:/tasks";
         }
         return "redirect:/home";
     }
