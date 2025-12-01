@@ -4,13 +4,14 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>MediSupply Portátil - Dashboard</title>
+    <title>Task Management System - Dashboard</title>
 
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
 
     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet">
     <script defer src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <style>
         :root {
@@ -143,9 +144,9 @@
 
 <body>
 
-    <nav class="navbar navbar-expand-lg navbar-dark">
+    <nav class="navbar navbar-expand-lg navbar-dark" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
         <div class="container">
-            <a class="navbar-brand fw-bold" href="#"><i class="fas fa-tasks me-2"></i>MediSupply Portátil</a>
+            <a class="navbar-brand fw-bold" href="#"><i class="fas fa-tasks me-2"></i>Task Management System</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
@@ -153,22 +154,30 @@
                 <ul class="navbar-nav me-auto">
                     <li class="nav-item"><a class="nav-link active" href="#dashboard"><i
                                 class="fas fa-tachometer-alt me-1"></i>Dashboard</a></li>
-                    <li class="nav-item"><a class="nav-link" href="#tareas"><i class="fas fa-list me-1"></i>Mis
-                            Tareas</a>
+                    <li class="nav-item" sec:authorize="hasAuthority('PERMISSION_READ')">
+                        <a class="nav-link" href="#tareas"><i class="fas fa-list me-1"></i>Mis Tareas</a>
+                    </li>
+                    <li class="nav-item" sec:authorize="hasRole('ADMIN')">
+                        <a class="nav-link" th:href="@{/admin/users}"><i class="fas fa-users me-1"></i>Usuarios</a>
                     </li>
                 </ul>
                 <ul class="navbar-nav">
                     <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown"><i
-                                class="fas fa-user-circle me-1"></i><span id="userDropdownName">Raven</span></a>
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-user-circle me-1"></i>
+                            <span th:text="${currentUser != null} ? ${currentUser.fullName} : 'Usuario'">Usuario</span>
+                            <span th:if="${currentUser != null and currentUser.role.name() == 'ADMIN'}"
+                                  class="badge bg-danger ms-1">ADMIN</span>
+                        </a>
                         <ul class="dropdown-menu dropdown-menu-end">
-                            <li><a class="dropdown-item" href="#" data-bs-toggle="modal"
-                                    data-bs-target="#perfilModal"><i class="fas fa-user-edit me-2"></i>Mi Perfil</a>
+                            <li class="dropdown-header">
+                                <small th:text="${currentUser != null} ? ${currentUser.email} : ''"></small>
                             </li>
-                            <li><a class="dropdown-item" href="#" data-bs-toggle="modal"
-                                    data-bs-target="#ajustesModal"><i class="fas fa-cog me-2"></i>Configuración</a></li>
-                            <li>
-                                <hr class="dropdown-divider">
+                            <li><hr class="dropdown-divider"></li>
+                            <li sec:authorize="hasRole('ADMIN')">
+                                <a class="dropdown-item" th:href="@{/admin/users}">
+                                    <i class="fas fa-users-cog me-2"></i>Gestión de Usuarios
+                                </a>
                             </li>
                             <li><a class="dropdown-item" th:href="@{/logout}"><i
                                         class="fas fa-sign-out-alt me-2"></i>Cerrar
@@ -180,17 +189,40 @@
         </div>
     </nav>
 
-    <section class="hero-section" id="dashboard">
+    <section class="hero-section" id="dashboard" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
         <div class="container text-center text-lg-start">
-            <h1 class="display-5 fw-bold" id="heroGreeting">Bienvenido a MediSupply Portátil</h1>
-            <p class="lead mb-4" id="heroSummary">Organiza tu día y no olvides lo importante.</p>
-            <!-- Botón abre modal -->
-            <button id="newTaskBtn" class="btn btn-light btn-lg me-2" data-bs-toggle="modal"
-                data-bs-target="#taskModal"><i class="fas fa-plus me-2"></i>Nueva Tarea
-            </button>
-            <a th:href="@{/tasks}" class="btn btn-outline-light btn-lg">
-                <i class="fas fa-list me-2"></i>Ver Mis Tareas
-            </a>
+            <h1 class="display-5 fw-bold" id="heroGreeting">
+                Bienvenido, <span th:text="${currentUser != null} ? ${currentUser.nombre} : 'Usuario'">Usuario</span>
+            </h1>
+            <p class="lead mb-4" id="heroSummary">
+                <span th:if="${currentUser != null and currentUser.role.name() == 'ADMIN'}">
+                    Administra el sistema y supervisa todas las tareas.
+                </span>
+                <span th:unless="${currentUser != null and currentUser.role.name() == 'ADMIN'}">
+                    Organiza tu día y no olvides lo importante.
+                </span>
+            </p>
+
+            <div class="d-flex gap-2 justify-content-center justify-content-lg-start flex-wrap">
+                <!-- Botón Nueva Tarea - Solo si tiene permiso CREATE -->
+                <button sec:authorize="hasAuthority('PERMISSION_CREATE')"
+                        id="newTaskBtn" class="btn btn-light btn-lg"
+                        data-bs-toggle="modal" data-bs-target="#taskModal">
+                    <i class="fas fa-plus me-2"></i>Nueva Tarea
+                </button>
+
+                <!-- Ver Tareas - Solo si tiene permiso READ -->
+                <a sec:authorize="hasAuthority('PERMISSION_READ')"
+                   th:href="@{/tasks}" class="btn btn-outline-light btn-lg">
+                    <i class="fas fa-list me-2"></i>Ver Mis Tareas
+                </a>
+
+                <!-- Admin: Gestionar Usuarios -->
+                <a sec:authorize="hasRole('ADMIN')"
+                   th:href="@{/admin/users}" class="btn btn-warning btn-lg">
+                    <i class="fas fa-users-cog me-2"></i>Gestionar Usuarios
+                </a>
+            </div>
         </div>
     </section>
 
@@ -207,7 +239,7 @@
                 <div class="stats-card">
                     <i class="fas fa-clock fa-2x text-warning mb-2"></i>
                     <h3 id="statsPending" class="fw-bold text-warning"
-                        th:text="${#lists.size(tasks.?[status == 'Pendiente'])}">0</h3>
+                        th:text="${pendingTasks}">0</h3>
                     <p class="text-muted mb-0">Pendientes</p>
                 </div>
             </div>
@@ -215,7 +247,7 @@
                 <div class="stats-card">
                     <i class="fas fa-check-circle fa-2x text-success mb-2"></i>
                     <h3 id="statsDone" class="fw-bold text-success"
-                        th:text="${#lists.size(tasks.?[status == 'Completada'])}">0</h3>
+                        th:text="${completedTasks}">0</h3>
                     <p class="text-muted mb-0">Completadas</p>
                 </div>
             </div>
@@ -223,7 +255,7 @@
                 <div class="stats-card">
                     <i class="fas fa-exclamation-triangle fa-2x text-danger mb-2"></i>
                     <h3 id="statsOverdue" class="fw-bold text-danger"
-                        th:text="${#lists.size(tasks.?[status == 'Vencida'])}">0</h3>
+                        th:text="${overdueTasks}">0</h3>
                     <p class="text-muted mb-0">Vencidas</p>
                 </div>
             </div>
@@ -453,9 +485,9 @@
                     <div class="list-group-item d-flex justify-content-between align-items-start" data-id="${task.id}">
                         <div class="ms-2 me-auto">
                             <div class="fw-bold">${task.title}</div>
-                            <small class="d-block">${task.description}</small>
+                            <small class="d-block">${task.description || ''}</small>
                             <div class="mt-2">
-                                <span class="badge me-1 ${getPriorityClass(task.priority)}">${task.priority}</span>
+                                <span class="badge me-1 ${getPriorityClass(task.priority)}">${task.priority || 'Normal'}</span>
                                 <span class="badge bg-secondary me-2">${task.status}</span>
                                 <div class="text-muted small mt-1">
                                     <div>Creada: ${formatDate(task.created)}</div>
@@ -464,15 +496,24 @@
                             </div>
                         </div>
                         <div class="d-flex align-items-center">
-                            <a href="/tasks/toggle/${task.id}" class="btn btn-sm btn-success me-1" title="Alternar completada">
-                                <i class="fas fa-check"></i>
-                            </a>
-                            <button type="button" class="btn btn-sm btn-warning me-1 edit-btn" title="Editar" data-id="${task.id}">
-                                <i class="fas fa-edit"></i>
-                            </button>
-                            <a href="/tasks/delete/${task.id}" class="btn btn-sm btn-danger delete-btn" title="Eliminar"
-                               onclick="return confirm('¿Eliminar esta tarea?');">
-                                <i class="fas fa-trash"></i>
+                            ${window.userPermissions.includes('UPDATE') ? `
+                                <form method="post" action="/tasks/toggle/${task.id}" class="d-inline me-1">
+                                    <button type="submit" class="btn btn-sm btn-success" title="Alternar completada">
+                                        <i class="fas fa-check"></i>
+                                    </button>
+                                </form>
+                            ` : ''}
+                            ${window.userPermissions.includes('UPDATE') ? `
+                                <button type="button" class="btn btn-sm btn-warning me-1 edit-btn" title="Editar" data-id="${task.id}">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                            ` : ''}
+                            ${window.userPermissions.includes('DELETE') ? `
+                                <button type="button" class="btn btn-sm btn-danger delete-btn" title="Eliminar"
+                                        data-id="${task.id}" onclick="confirmDelete(${task.id}, '${task.title}')">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            ` : ''}
                             </a>
                         </div>
                     </div>
@@ -582,13 +623,39 @@
             searchTask.addEventListener('input', filterRender);
             filterPriority.addEventListener('change', filterRender);
 
-            // Confirmación eliminación (los enlaces ya tienen href a /tasks/delete/{id} con confirm inline)
-            // No hace falta JS adicional porque el anchor ya redirige.
-
-            // Al enviar el form se hace submit normal (POST a /tasks/save) y el backend redirige a /home
-            // (CSRF está desactivado en la SecurityConfig proporcionada; si tu proyecto activa CSRF hay que añadir token aquí)
-
         });
+
+        // Variables globales de permisos del usuario
+        window.userPermissions = [];
+
+        /*[# th:if="${currentUser != null and currentUser.permissions != null}"]*/
+        /*[# th:each="permission : ${currentUser.permissions}"]*/
+        window.userPermissions.push('/*[[${permission}]]*/');
+        /*[/]*/
+        /*[/]*/
+
+        // Función para confirmar eliminación con SweetAlert2
+        function confirmDelete(taskId, taskTitle) {
+            Swal.fire({
+                title: '¿Eliminar Tarea?',
+                html: `¿Estás seguro de que quieres eliminar la tarea <strong>${taskTitle}</strong>?<br><br>Esta acción no se puede deshacer.`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Sí, eliminar',
+                cancelButtonText: 'Cancelar'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Crear formulario para enviar POST
+                    const form = document.createElement('form');
+                    form.method = 'POST';
+                    form.action = `/tasks/delete/${taskId}`;
+                    document.body.appendChild(form);
+                    form.submit();
+                }
+            });
+        }
     </script>
 
 </body>
