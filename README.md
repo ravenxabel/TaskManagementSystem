@@ -1,4 +1,4 @@
-"# Task Management System
+"# MediSupply
 
 ## Descripción
 Sistema completo de gestión de tareas con autenticación, autorización y control de permisos basado en roles.
