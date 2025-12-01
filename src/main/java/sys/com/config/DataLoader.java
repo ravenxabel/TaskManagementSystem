@@ -18,20 +18,20 @@ public class DataLoader implements ApplicationRunner {
 
     @Override
     public void run(ApplicationArguments args) throws Exception {
-        System.out.println("🚀 Iniciando carga de datos por defecto...");
+        System.out.println("Iniciando carga de datos por defecto...");
 
         // Crear usuario administrador por defecto si no existe
-        if (!userService.existsByEmail("admin@taskmanagement.com")) {
+        if (!userService.existsByEmail("admin@medisupply.com")) {
             try {
                 userService.registerUser(
                     "Administrador",
                     "del Sistema",
-                    "admin@taskmanagement.com",
+                    "admin@medisupply.com",
                     "admin123",
                     Role.ADMIN
                 );
                 System.out.println("✅ Usuario administrador creado:");
-                System.out.println("   Email: admin@taskmanagement.com");
+                System.out.println("   Email: admin@medisupply.com");
                 System.out.println("   Password: admin123");
             } catch (Exception e) {
                 System.err.println("❌ Error al crear usuario administrador: " + e.getMessage());
@@ -42,17 +42,17 @@ public class DataLoader implements ApplicationRunner {
         }
 
         // Crear usuario de prueba si no existe
-        if (!userService.existsByEmail("user@taskmanagement.com")) {
+        if (!userService.existsByEmail("user@medisupply.com")) {
             try {
                 userService.registerUser(
                     "Usuario",
                     "de Prueba",
-                    "user@taskmanagement.com",
+                    "user@medisupply.com",
                     "user123",
                     Role.USER
                 );
                 System.out.println("✅ Usuario de prueba creado:");
-                System.out.println("   Email: user@taskmanagement.com");
+                System.out.println("   Email: user@medisupply.com");
                 System.out.println("   Password: user123");
             } catch (Exception e) {
                 System.err.println("❌ Error al crear usuario de prueba: " + e.getMessage());
